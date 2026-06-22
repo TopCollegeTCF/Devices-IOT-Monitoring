@@ -9,11 +9,19 @@
 <body>
     <div id="canvas-container"></div>
     
-    <!-- Только необходимые библиотеки -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Import Map для ES Modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/",
+            "tweakpane": "https://cdn.jsdelivr.net/npm/tweakpane@4.0.1/dist/tweakpane.min.js",
+            "socket.io-client": "https://cdn.jsdelivr.net/npm/socket.io-client@4.5.4/dist/socket.io.esm.min.js"
+        }
+    }
+    </script>
     
-    <!-- Основной скрипт -->
-    <script src="/js/app.js"></script>
+    <!-- Основной модуль -->
+    <script type="module" src="/js/app.js"></script>
 </body>
 </html>

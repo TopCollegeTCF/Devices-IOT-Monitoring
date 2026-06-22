@@ -7,10 +7,52 @@
 body {
     overflow: hidden;
     background: #0a0a1a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 #canvas-container {
     width: 100vw;
     height: 100vh;
     display: block;
+}
+
+/* Стили для Tweakpane */
+.tp-dfwv {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 1000 !important;
+    
+    overflow-y: auto !important;
+    background: rgba(10, 10, 30, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    min-width: 320px !important;
+    max-width: 400px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+.tp-dfwv::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tp-dfwv::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tp-dfwv::-webkit-scrollbar-thumb {
+    background: #4fc3f7;
+    border-radius: 2px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .tp-dfwv {
+        bottom: 10px !important;
+        right: 10px !important;
+        min-width: 280px !important;
+        max-width: 340px !important;
+        max-height: 60vh !important;
+    }
 }
