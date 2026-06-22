@@ -2,18 +2,28 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>IoT 3D Мониторинг</title>
+    <title>🏠 Умная квартира IoT</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <div id="info-panel">
-        <h2>Устройства</h2>
+        <h2>🏠 Умная квартира</h2>
+        <div id="stats">
+            <span id="total-devices">0</span> устройств
+            <span id="online-count">0</span> онлайн
+            <span id="error-count">0</span> ошибок
+        </div>
         <div id="device-list"></div>
     </div>
+    
     <div id="canvas-container"></div>
     
+    <!-- Подключаем библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweakpane@4.0.1/dist/tweakpane.min.js"></script>
+    
+    <!-- Наш код -->
     <script src="/js/app.js"></script>
 </body>
 </html>

@@ -3,26 +3,25 @@ const fastifySocketIO = require('fastify-socket.io');
 const path = require('path');
 const fs = require('fs');
 const deviceService = require('./services/deviceService');
-const deviceRoutes = require('./routes/devices');
-
-// Создаем папку для логов, если её нет
-const logDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
 
 const app = Fastify({
   logger: {
     level: 'info',
-    file: path.join(logDir, 'server.log')
+    file: path.join(__dirname, 'logs', 'server.log')
   }
 });
 
-// Регистрируем статику для фронта
+// Создаем папки для логов
+const logDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+
+// Статика
 app.register(require('@fastify/static'), {
   root: path.join(__dirname, '../public'),
   prefix: '/'
 });
 
-// Регистрируем Socket.io
+// Socket.io
 app.register(fastifySocketIO, {
   cors: {
     origin: '*',
@@ -30,28 +29,92 @@ app.register(fastifySocketIO, {
   }
 });
 
-// Подключаем маршруты
-app.register(deviceRoutes, { prefix: '/api/devices' });
+// Маршруты для устройств
+app.get('/api/devices', async (request, reply) => {
+  try {
+    return deviceService.getAllDevices();
+  } catch (error) {
+    app.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error' });
+  }
+});
 
-// Обработка сокетов
+app.get('/api/devices/:id', async (request, reply) => {
+  try {
+    const { id } = request.params;
+    const device = deviceService.getDeviceById(parseInt(id));
+    if (!device) {
+      return reply.code(404).send({ error: 'Device not found' });
+    }
+    return device;
+  } catch (error) {
+    app.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/devices/:id', async (request, reply) => {
+  try {
+    const { id } = request.params;
+    const data = request.body;
+    
+    if (!data || Object.keys(data).length === 0) {
+      return reply.code(400).send({ error: 'No data provided' });
+    }
+    
+    const updated = deviceService.updateDevice(parseInt(id), data);
+    if (!updated) {
+      return reply.code(404).send({ error: 'Device not found' });
+    }
+    return updated;
+  } catch (error) {
+    app.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error' });
+  }
+});
+
+// Сокеты
 app.ready().then(() => {
   app.io.on('connection', (socket) => {
     console.log('Клиент подключен:', socket.id);
-
-    // Отправляем текущие данные при подключении
+    
+    // Отправляем все устройства при подключении
     socket.emit('devices', deviceService.getAllDevices());
-
-    // Подписка на обновления (эмулируем изменения)
+    
+    // Интервал для обновлений
     const interval = setInterval(() => {
-      const updated = deviceService.updateRandomDevice();
-      if (updated) {
-        app.io.emit('deviceUpdate', updated);
+      const updates = deviceService.updateRandomDevices();
+      if (updates && updates.length > 0) {
+        app.io.emit('deviceUpdate', updates);
       }
-    }, 3000);
-
+    }, 2000);
+    
     socket.on('disconnect', () => {
-      console.log('Клиент отключен:', socket.id);
+      console.log('👋 Клиент отключен:', socket.id);
       clearInterval(interval);
+    });
+
+    socket.on('toggleDevice', (id) => {
+        const device = deviceService.toggleDeviceStatus(id);
+        if (device) {
+            app.io.emit('deviceUpdate', [device]);
+            socket.emit('toggleDeviceResponse', device);
+        }
+    });
+    
+    socket.on('simulateError', (id) => {
+        const device = deviceService.simulateError(id);
+        if (device) {
+            app.io.emit('deviceUpdate', [device]);
+            socket.emit('simulateErrorResponse', device);
+        }
+    });
+    
+    socket.on('resetAll', () => {
+        deviceService.resetAllDevices();
+        const devices = deviceService.getAllDevices();
+        app.io.emit('devices', devices);
+        socket.emit('resetAllResponse');
     });
   });
 });

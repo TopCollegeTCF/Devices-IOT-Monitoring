@@ -1,7 +1,7 @@
 {
-  "name": "iot-monitor",
-  "version": "1.0.0",
-  "description": "IoT devices monitoring with 3D visualization",
+  "name": "iot-apartment",
+  "version": "1.0.1",
+  "description": "Virtual apartment with IoT devices visualization",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
