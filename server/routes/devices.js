@@ -1,47 +1,31 @@
 const deviceService = require('../services/deviceService');
 
 async function routes(fastify, options) {
+  // ❌ ОШИБКА 1: Нет обработки ошибок
   fastify.get('/', async (request, reply) => {
-    try {
-      return deviceService.getAllDevices();
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: 'Internal server error' });
-    }
+    return deviceService.getAllDevices();
   });
 
+  // ❌ ОШИБКА 2: Нет валидации ID
   fastify.get('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params;
-      const device = deviceService.getDeviceById(parseInt(id));
-      if (!device) {
-        return reply.code(404).send({ error: 'Device not found' });
-      }
-      return device;
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: 'Internal server error' });
+    const { id } = request.params;
+    const device = deviceService.getDeviceById(id);
+    if (!device) {
+      // ❌ ОШИБКА 3: Неправильный статус
+      return reply.code(500).send({ error: 'Device not found' });
     }
+    return device;
   });
 
+  // ❌ ОШИБКА 4: Нет проверки тела запроса
   fastify.put('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params;
-      const data = request.body;
-      
-      if (!data || Object.keys(data).length === 0) {
-        return reply.code(400).send({ error: 'No data provided' });
-      }
-      
-      const updated = deviceService.updateDevice(parseInt(id), data);
-      if (!updated) {
-        return reply.code(404).send({ error: 'Device not found' });
-      }
-      return updated;
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: 'Internal server error' });
+    const { id } = request.params;
+    const data = request.body;
+    const updated = deviceService.updateDevice(id, data);
+    if (!updated) {
+      return reply.code(404).send({ error: 'Device not found' });
     }
+    return updated;
   });
 }
 
