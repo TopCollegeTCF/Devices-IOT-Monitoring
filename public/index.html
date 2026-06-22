@@ -3,25 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏠 IoT Квартира</title>
+    <title>IoT Apartment - 3D</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <div id="canvas-container"></div>
+    <div id="app">
+        <div id="canvas-container"></div>
+        <div id="ui-panel">
+            <div id="device-list"></div>
+        </div>
+        <div id="info-panel">
+            <h3>IoT Dashboard</h3>
+            <p id="connection-status">Connecting...</p>
+            <div id="stats"></div>
+        </div>
+    </div>
     
-    <!-- Import Map для ES Modules -->
     <script type="importmap">
     {
         "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
             "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/",
-            "tweakpane": "https://cdn.jsdelivr.net/npm/tweakpane@4.0.1/dist/tweakpane.min.js",
             "socket.io-client": "https://cdn.jsdelivr.net/npm/socket.io-client@4.5.4/dist/socket.io.esm.min.js"
         }
     }
     </script>
     
-    <!-- Основной модуль -->
     <script type="module" src="/js/app.js"></script>
 </body>
 </html>

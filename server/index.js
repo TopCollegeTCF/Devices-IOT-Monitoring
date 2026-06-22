@@ -1,50 +1,52 @@
-const Fastify = require('fastify');
-const path = require('path');
-const fs = require('fs');
+import Fastify from 'fastify';
+import fastifySocket from 'fastify-socket.io';
+import fastifyStatic from '@fastify/static';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { handleSocketConnection } from './socket-handlers.js';
 
-// Создаем папки
-const logDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = Fastify({
-  logger: {
-    level: 'info',
-    file: path.join(logDir, 'server.log')
-  }
+  logger: true
 });
 
-// Регистрируем статику
-app.register(require('@fastify/static'), {
-  root: path.join(__dirname, '../public'),
+// Регистрация статических файлов
+app.register(fastifyStatic, {
+  root: join(__dirname, '../public'),
   prefix: '/'
 });
 
-// Регистрируем сокеты
-app.register(require('fastify-socket.io'), {
+// Регистрация Socket.IO
+app.register(fastifySocket, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
   }
 });
 
-// Регистрируем роуты
-app.register(require('./routes'), { prefix: '/api' });
-
-// Регистрируем обработчики сокетов
-app.ready().then(() => {
-  require('./sockets')(app.io);
+// Обработка подключений WebSocket
+app.ready((err) => {
+  if (err) throw err;
+  
+  app.io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    handleSocketConnection(app.io, socket);
+  });
 });
 
-// Запуск
-const start = async () => {
-  try {
-    await app.listen({ port: 3000, host: '0.0.0.0' });
-    console.log('🚀 Сервер запущен на http://localhost:3000');
-    console.log('📊 Tweakpane UI доступен на http://localhost:3000');
-  } catch (err) {
-    app.log.error(err);
+// Маршрут для тестирования
+app.get('/api/status', async (request, reply) => {
+  return { status: 'online', timestamp: new Date().toISOString() };
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen({ port: PORT, host: '0.0.0.0' }, (err, address) => {
+  if (err) {
+    console.error(err);
     process.exit(1);
   }
-};
-
-start();
+  console.log(`Server running on ${address}`);
+});

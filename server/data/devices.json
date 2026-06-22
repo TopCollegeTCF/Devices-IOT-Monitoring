@@ -1,0 +1,58 @@
+{
+    "devices": [
+      {
+        "id": "light-livingroom",
+        "name": "Living Room Light",
+        "type": "light",
+        "room": "living-room",
+        "status": "off",
+        "value": 0,
+        "position": { "x": -2, "y": 2.5, "z": -3 }
+      },
+      {
+        "id": "light-kitchen",
+        "name": "Kitchen Light",
+        "type": "light",
+        "room": "kitchen",
+        "status": "off",
+        "value": 0,
+        "position": { "x": 3, "y": 2.5, "z": -1 }
+      },
+      {
+        "id": "ac-bedroom",
+        "name": "Air Conditioner",
+        "type": "ac",
+        "room": "bedroom",
+        "status": "off",
+        "value": 22,
+        "position": { "x": 2, "y": 2.5, "z": 4 }
+      },
+      {
+        "id": "sensor-temperature",
+        "name": "Temperature Sensor",
+        "type": "sensor",
+        "room": "living-room",
+        "status": "on",
+        "value": 23.5,
+        "position": { "x": -1, "y": 1.5, "z": -2 }
+      },
+      {
+        "id": "sensor-humidity",
+        "name": "Humidity Sensor",
+        "type": "sensor",
+        "room": "living-room",
+        "status": "on",
+        "value": 55.2,
+        "position": { "x": 0, "y": 1.5, "z": -2 }
+      },
+      {
+        "id": "door-main",
+        "name": "Main Door",
+        "type": "door",
+        "room": "entrance",
+        "status": "closed",
+        "value": 0,
+        "position": { "x": -3, "y": 0, "z": 3 }
+      }
+    ]
+  }
