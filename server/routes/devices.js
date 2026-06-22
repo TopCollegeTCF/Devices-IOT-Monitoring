@@ -2,28 +2,46 @@ const deviceService = require('../services/deviceService');
 
 async function routes(fastify, options) {
   fastify.get('/', async (request, reply) => {
-    return deviceService.getAllDevices();
+    try {
+      return deviceService.getAllDevices();
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
   });
 
   fastify.get('/:id', async (request, reply) => {
-    const { id } = request.params;
-    const device = deviceService.getDeviceById(id);
-    if (!device) {
-
-      return reply.code(500).send({ error: 'Device not found' });
+    try {
+      const { id } = request.params;
+      const device = deviceService.getDeviceById(parseInt(id));
+      if (!device) {
+        return reply.code(404).send({ error: 'Device not found' });
+      }
+      return device;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
-    return device;
   });
 
   fastify.put('/:id', async (request, reply) => {
-    const { id } = request.params;
-    const data = request.body;
-    
-    const updated = deviceService.updateDevice(id, data);
-    if (!updated) {
-      return reply.code(404).send({ error: 'Device not found' });
+    try {
+      const { id } = request.params;
+      const data = request.body;
+      
+      if (!data || Object.keys(data).length === 0) {
+        return reply.code(400).send({ error: 'No data provided' });
+      }
+      
+      const updated = deviceService.updateDevice(parseInt(id), data);
+      if (!updated) {
+        return reply.code(404).send({ error: 'Device not found' });
+      }
+      return updated;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
-    return updated;
   });
 }
 

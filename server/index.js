@@ -109,6 +109,11 @@ app.ready().then(() => {
             socket.emit('simulateErrorResponse', device);
         }
     });
+
+    socket.on('requestDevices', () => {
+        console.log('📤 Отправка устройств клиенту');
+        socket.emit('devices', deviceService.getAllDevices());
+    });
     
     socket.on('resetAll', () => {
         deviceService.resetAllDevices();

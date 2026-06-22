@@ -12,8 +12,12 @@ body {
 }
 
 #canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+    z-index: 1;
 }
 
 #info-panel {
@@ -30,6 +34,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     z-index: 10;
+    pointer-events: auto;
 }
 
 #info-panel h2 {
@@ -66,6 +71,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .device-item {
@@ -103,6 +110,7 @@ body {
 .device-item .name {
     flex: 1;
     margin-right: 10px;
+    font-size: 12px;
 }
 
 .device-item .value {
@@ -140,7 +148,53 @@ body {
     margin-right: 8px;
 }
 
-/* Стили для Tweakpane */
+#tweakpane-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 20;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
 .tp-dfwv {
-    z-index: 20 !important;
+    z-index: 100 !important;
+    background: rgba(10, 10, 30, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    min-width: 280px !important;
+    color: #fff !important;
+}
+
+.tp-rotv {
+    color: #fff !important;
+}
+
+.tp-brkv {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.tp-btnv {
+    background: #4fc3f7 !important;
+    color: #0a0a1a !important;
+    font-weight: bold !important;
+}
+
+.tp-btnv:hover {
+    background: #64ffda !important;
+}
+
+/* Скролл для списка устройств */
+#device-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+#device-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#device-list::-webkit-scrollbar-thumb {
+    background: #4fc3f7;
+    border-radius: 2px;
 }
