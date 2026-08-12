@@ -1,19 +1,16 @@
+import * as THREE from 'three';
 import { ILayer, LayerType } from '../interfaces/ILayer';
 
 /**
  * Абстрактный базовый класс для управления слоями
- * Обеспечивает добавление, удаление и управление визуальными слоями
  */
 export abstract class BaseLayerManager {
   /** Хранилище всех слоев по их ID */
   protected layers: Map<string, ILayer> = new Map();
-  
   /** Слои сгруппированные по типу */
   protected layersByType: Map<LayerType, ILayer[]> = new Map();
-  
   /** Порядок отрисовки слоев (от заднего к переднему) */
   protected renderOrder: string[] = [];
-  
   /** Сцена Three.js для добавления слоев */
   protected scene: THREE.Scene;
   

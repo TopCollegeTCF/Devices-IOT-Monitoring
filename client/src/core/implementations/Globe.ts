@@ -6,23 +6,20 @@ import { BaseGlobe, GlobeConfig } from '../abstract/BaseGlobe';
  * Реализация глобуса с использованием Three.js
  */
 export class Globe extends BaseGlobe {
-  private container: HTMLElement;
-  private config: GlobeConfig;
   private starField: THREE.Points | null = null;
   private cloudMesh: THREE.Mesh | null = null;
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   private mouse: THREE.Vector2 = new THREE.Vector2();
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(container: HTMLElement, config: GlobeConfig) {
     super(container, config);
-    this.container = container;
-    this.config = config;
   }
 
   protected initScene(container: HTMLElement, config: GlobeConfig): void {
     // Создание сцены
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(config.backgroundColor);
+    this._scene = new THREE.Scene();
+    this._scene.background = new THREE.Color(config.backgroundColor);
 
     // Создание камеры
     const aspect = container.clientWidth / container.clientHeight;
@@ -56,20 +53,24 @@ export class Globe extends BaseGlobe {
 
     // Создание групп
     this.globeGroup = new THREE.Group();
-    this.scene.add(this.globeGroup);
+    this._scene.add(this.globeGroup);
 
     // Создание компонентов
     this.createGlobe(config);
     this.createAtmosphere();
     this.createStarField();
 
-    // Обработка изменения размера
-    const resizeObserver = new ResizeObserver(() => {
+    // Настройка обработчика изменения размера
+    this.resizeObserver = new ResizeObserver(() => {
       const width = container.clientWidth;
       const height = container.clientHeight;
       this.resize(width, height);
     });
-    resizeObserver.observe(container);
+    this.resizeObserver.observe(container);
+
+    // Логируем успешную инициализацию
+    console.log('Globe initialized with scene:', this._scene);
+    console.log('Renderer created:', this.renderer);
   }
 
   protected createGlobe(config: GlobeConfig): void {
@@ -112,18 +113,23 @@ export class Globe extends BaseGlobe {
 
     // Добавление освещения
     const ambientLight = new THREE.AmbientLight(0x444466, 0.5);
-    this.scene.add(ambientLight);
+    this._scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xffeedd, 1.5);
     sunLight.position.set(5, 3, 5);
-    this.scene.add(sunLight);
+    this._scene.add(sunLight);
 
     const backLight = new THREE.DirectionalLight(0x4488ff, 0.3);
     backLight.position.set(-5, -3, -5);
-    this.scene.add(backLight);
+    this._scene.add(backLight);
   }
 
   protected createAtmosphere(): void {
+    if (!this.config) {
+      console.warn('Config not available for atmosphere creation');
+      return;
+    }
+
     const geometry = new THREE.SphereGeometry(
       this.config.radius + this.config.atmosphereHeight,
       48,
@@ -163,6 +169,11 @@ export class Globe extends BaseGlobe {
   }
 
   protected createStarField(): void {
+    if (!this.config) {
+      console.warn('Config not available for star field creation');
+      return;
+    }
+
     const starsCount = this.config.starDensity || 2000;
     const positions = new Float32Array(starsCount * 3);
     const colors = new Float32Array(starsCount * 3);
@@ -199,11 +210,13 @@ export class Globe extends BaseGlobe {
     });
 
     this.starField = new THREE.Points(geometry, material);
-    this.scene.add(this.starField);
+    this._scene.add(this.starField);
   }
 
   public update(deltaTime: number): void {
-    this.controls.update();
+    if (this.controls) {
+      this.controls.update();
+    }
 
     // Вращение облаков
     if (this.cloudMesh) {
@@ -217,21 +230,30 @@ export class Globe extends BaseGlobe {
     }
 
     // Обновление уровня зума
-    const distance = this.camera.position.length();
-    this.zoomLevel = Math.max(
-      this.MIN_ZOOM,
-      Math.min(
-        this.MAX_ZOOM,
-        ((distance - this.controls.minDistance) / 
-         (this.controls.maxDistance - this.controls.minDistance)) * 100
-      )
-    );
+    if (this.camera && this.controls) {
+      const distance = this.camera.position.length();
+      this.zoomLevel = Math.max(
+        this.MIN_ZOOM,
+        Math.min(
+          this.MAX_ZOOM,
+          ((distance - this.controls.minDistance) /
+           (this.controls.maxDistance - this.controls.minDistance)) * 100
+        )
+      );
+    }
+
+    // Явный рендеринг
+    if (this.renderer && this._scene && this.camera) {
+      this.renderer.render(this._scene, this.camera);
+    }
   }
 
   public setZoomLevel(level: number): void {
+    if (!this.camera || !this.controls) return;
+    
     const clamped = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, level));
     const ratio = clamped / this.MAX_ZOOM;
-    const distance = this.controls.minDistance + 
+    const distance = this.controls.minDistance +
       (this.controls.maxDistance - this.controls.minDistance) * ratio;
     
     const direction = this.camera.position.clone().normalize();
@@ -240,6 +262,8 @@ export class Globe extends BaseGlobe {
   }
 
   public getSurfaceCoordinates(mouseX: number, mouseY: number): THREE.Vector3 | null {
+    if (!this.globeMesh || !this.camera) return null;
+    
     this.mouse.set(mouseX, mouseY);
     this.raycaster.setFromCamera(this.mouse, this.camera);
     
@@ -251,7 +275,7 @@ export class Globe extends BaseGlobe {
   }
 
   public latLonToPosition(lat: number, lon: number, radius?: number): THREE.Vector3 {
-    const r = radius || this.config.radius;
+    const r = radius || (this.config ? this.config.radius : 1);
     const phi = (90 - lat) * Math.PI / 180;
     const theta = lon * Math.PI / 180;
     
@@ -260,5 +284,13 @@ export class Globe extends BaseGlobe {
       r * Math.cos(phi),
       r * Math.sin(phi) * Math.sin(theta)
     );
+  }
+
+  public dispose(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    super.dispose();
   }
 }

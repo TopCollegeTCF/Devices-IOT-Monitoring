@@ -13,19 +13,14 @@ const logger = createLogger('Main');
  */
 (async function main() {
   try {
-    logger.info('Initializing application...');
-    
-    // Скрытие загрузчика
-    const loading = document.getElementById('loading');
-    
-    // Создание контроллера
-    const app = new AppController();
+    logger.info('Starting application...');
     
     // Получение элемента для рендеринга
     const container = document.getElementById('globe-container');
     if (!container) {
       throw new Error('Container element not found');
     }
+    logger.info('Container found:', container);
     
     // Конфигурация глобуса
     const globeConfig: GlobeConfig = {
@@ -52,26 +47,32 @@ const logger = createLogger('Main');
       }
     };
     
+    // Создание контроллера
+    const app = new AppController();
+    
     // Конфигурация приложения
     const config = {
       globeConfig,
       globeCreator: (container: HTMLElement, config: any) => {
+        logger.info('Creating globe...');
         return new Globe(container, config);
       },
       layerManagerCreator: (scene: THREE.Scene) => {
+        logger.info('Creating layer manager...');
         return new LayerManager(scene);
       },
       contexts: [
         new GeographyContext(),
-        // new HistoryContext(),
-        // new BiologyContext()
       ]
     };
     
     // Инициализация приложения
     await app.initialize(container, config);
     
+    logger.info('App initialized, globe should be visible');
+    
     // Скрытие загрузчика
+    const loading = document.getElementById('loading');
     if (loading) {
       loading.classList.add('hidden');
       setTimeout(() => {
@@ -86,7 +87,6 @@ const logger = createLogger('Main');
         const contextId = btn.getAttribute('data-context');
         if (!contextId) return;
         
-        // Обновление активной кнопки
         buttons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
@@ -101,12 +101,18 @@ const logger = createLogger('Main');
     
     // Запуск цикла рендеринга
     let lastTime = 0;
+    let frameCount = 0;
     
     function render(time: number) {
       const deltaTime = (time - lastTime) / 1000;
       lastTime = time;
       
       app.update(deltaTime);
+      
+      frameCount++;
+      if (frameCount % 60 === 0) {
+        logger.debug(`Rendering frame ${frameCount}`);
+      }
       
       requestAnimationFrame(render);
     }
@@ -123,17 +129,28 @@ const logger = createLogger('Main');
     // Обработка изменения размера окна
     window.addEventListener('resize', () => {
       const rect = container.getBoundingClientRect();
-      const globe = (app as any).globe;
+      const globe = app.globe;
       if (globe) {
         globe.resize(rect.width, rect.height);
       }
     });
     
-    logger.info('Application initialized successfully');
+    logger.info('Application is ready!');
     render(0);
     
+    // Проверка, что сцена отображается
+    setTimeout(() => {
+      const canvas = container.querySelector('canvas');
+      if (canvas) {
+        logger.info('Canvas found, rendering should work');
+        logger.info('Canvas size:', canvas.width, 'x', canvas.height);
+      } else {
+        logger.warn('Canvas not found in container');
+      }
+    }, 1000);
+    
   } catch (error) {
-    logger.error('Failed to initialize application', error);
+    logger.error('Failed to initialize application:', error);
     const errorMsg = document.getElementById('error-message');
     if (errorMsg) {
       errorMsg.textContent = `❌ Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`;

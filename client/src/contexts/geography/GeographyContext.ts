@@ -21,6 +21,7 @@ class TestGeographyLayer implements ILayer {
   private objects: THREE.Object3D[] = [];
   private group: THREE.Group = new THREE.Group();
   private dataLoaded = false;
+  private scene: THREE.Scene | null = null;
 
   async loadData(data: any[]): Promise<void> {
     logger.info(`Loading ${data.length} items`);
@@ -32,19 +33,25 @@ class TestGeographyLayer implements ILayer {
   }
 
   async render(scene: THREE.Scene, options?: any): Promise<void> {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.objects = [];
+
     // Создание тестовых маркеров на глобусе
     const positions = [
-      { lat: 55.7558, lon: 37.6173, name: 'Москва' },
-      { lat: 59.9343, lon: 30.3351, name: 'Санкт-Петербург' },
-      { lat: 48.8566, lon: 2.3522, name: 'Париж' },
-      { lat: 51.5074, lon: -0.1278, name: 'Лондон' },
-      { lat: 40.7128, lon: -74.0060, name: 'Нью-Йорк' },
-      { lat: 35.6762, lon: 139.6503, name: 'Токио' },
-      { lat: -33.8688, lon: 151.2093, name: 'Сидней' },
-      { lat: -23.5505, lon: -46.6333, name: 'Сан-Паулу' },
+      { lat: 55.7558, lon: 37.6173, name: 'Москва', country: 'Россия' },
+      { lat: 59.9343, lon: 30.3351, name: 'Санкт-Петербург', country: 'Россия' },
+      { lat: 48.8566, lon: 2.3522, name: 'Париж', country: 'Франция' },
+      { lat: 51.5074, lon: -0.1278, name: 'Лондон', country: 'Великобритания' },
+      { lat: 40.7128, lon: -74.0060, name: 'Нью-Йорк', country: 'США' },
+      { lat: 35.6762, lon: 139.6503, name: 'Токио', country: 'Япония' },
+      { lat: -33.8688, lon: 151.2093, name: 'Сидней', country: 'Австралия' },
+      { lat: -23.5505, lon: -46.6333, name: 'Сан-Паулу', country: 'Бразилия' },
+      { lat: 19.0760, lon: 72.8777, name: 'Мумбаи', country: 'Индия' },
+      { lat: 30.0444, lon: 31.2357, name: 'Каир', country: 'Египет' },
     ];
 
-    const radius = 1.02; // Чуть выше поверхности
+    const radius = 1.02;
 
     for (const pos of positions) {
       const phi = (90 - pos.lat) * Math.PI / 180;
@@ -54,29 +61,35 @@ class TestGeographyLayer implements ILayer {
       const y = radius * Math.cos(phi);
       const z = radius * Math.sin(phi) * Math.sin(theta);
 
-      // Создание маркера
+      // Создание маркера с разными цветами
+      const colors = [0x4080ff, 0x4ade80, 0xfacc15, 0xf472b6, 0xfb923c];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
       const markerGeom = new THREE.SphereGeometry(0.015, 8, 8);
       const markerMat = new THREE.MeshBasicMaterial({ 
-        color: 0x4080ff,
+        color: color,
         transparent: true,
         opacity: 0.9
       });
       const marker = new THREE.Mesh(markerGeom, markerMat);
       marker.position.set(x, y, z);
+      marker.userData = { 
+        name: pos.name, 
+        lat: pos.lat, 
+        lon: pos.lon,
+        country: pos.country,
+        type: 'city'
+      };
       
-      // Добавление анимированного свечения
+      // Свечение маркера
       const glowGeom = new THREE.SphereGeometry(0.025, 8, 8);
       const glowMat = new THREE.MeshBasicMaterial({
-        color: 0x4080ff,
+        color: color,
         transparent: true,
-        opacity: 0.3
+        opacity: 0.2
       });
       const glow = new THREE.Mesh(glowGeom, glowMat);
       glow.position.set(x, y, z);
-      
-      // Сохранение данных
-      marker.userData = { name: pos.name, lat: pos.lat, lon: pos.lon };
-      glow.userData = { parent: marker };
       
       this.group.add(glow);
       this.group.add(marker);
@@ -93,39 +106,52 @@ class TestGeographyLayer implements ILayer {
   }
 
   private createTestBoundaries(radius: number): void {
-    // Простая тестовая граница (квадрат)
-    const points = [
-      [45, -10],
-      [55, -10],
-      [55, 10],
-      [45, 10],
-      [45, -10]
+    // Европейские границы (упрощенно)
+    const boundaries = [
+      { lat: 45, lon: -10, color: 0xff6644 },
+      { lat: 55, lon: -10, color: 0xff6644 },
+      { lat: 55, lon: 10, color: 0xff6644 },
+      { lat: 45, lon: 10, color: 0xff6644 },
     ];
 
-    const positions: THREE.Vector3[] = [];
-    for (const [lat, lon] of points) {
-      const phi = (90 - lat) * Math.PI / 180;
-      const theta = lon * Math.PI / 180;
-      positions.push(new THREE.Vector3(
-        radius * 1.005 * Math.sin(phi) * Math.cos(theta),
-        radius * 1.005 * Math.cos(phi),
-        radius * 1.005 * Math.sin(phi) * Math.sin(theta)
-      ));
-    }
+    // Северная Америка
+    const boundaries2 = [
+      { lat: 30, lon: -130, color: 0x44ff66 },
+      { lat: 50, lon: -130, color: 0x44ff66 },
+      { lat: 50, lon: -70, color: 0x44ff66 },
+      { lat: 30, lon: -70, color: 0x44ff66 },
+    ];
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(positions);
-    const material = new THREE.LineBasicMaterial({ 
-      color: 0xff6644,
-      transparent: true,
-      opacity: 0.6
-    });
-    const line = new THREE.Line(geometry, material);
-    this.group.add(line);
-    this.objects.push(line);
+    const allBoundaries = [boundaries, boundaries2];
+
+    for (const boundary of allBoundaries) {
+      const points: THREE.Vector3[] = [];
+      for (const point of boundary) {
+        const phi = (90 - point.lat) * Math.PI / 180;
+        const theta = point.lon * Math.PI / 180;
+        points.push(new THREE.Vector3(
+          radius * 1.005 * Math.sin(phi) * Math.cos(theta),
+          radius * 1.005 * Math.cos(phi),
+          radius * 1.005 * Math.sin(phi) * Math.sin(theta)
+        ));
+      }
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color: boundary[0].color,
+        transparent: true,
+        opacity: 0.5
+      });
+      const line = new THREE.Line(geometry, material);
+      this.group.add(line);
+      this.objects.push(line);
+    }
   }
 
   remove(): void {
-    this.group.removeFromParent();
+    if (this.group && this.group.parent) {
+      this.group.removeFromParent();
+    }
   }
 
   getInteractiveObjects(): THREE.Object3D[] {
@@ -137,9 +163,25 @@ class TestGeographyLayer implements ILayer {
   }
 
   clear(): void {
-    this.group.clear();
+    if (this.group) {
+      // Удаляем все дочерние объекты
+      while(this.group.children.length > 0) {
+        const child = this.group.children[0];
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+        this.group.remove(child);
+      }
+    }
     this.objects = [];
     this.dataLoaded = false;
+    this.scene = null;
+    logger.info('Layer cleared');
   }
 
   isDataLoaded(): boolean {
@@ -160,6 +202,7 @@ export class GeographyContext implements IContext {
   
   private layers: ILayer[] = [];
   private dataLoaders: Map<string, BaseDataLoader> = new Map();
+  private testLayer: TestGeographyLayer | null = null;
 
   async initialize(config?: any): Promise<void> {
     this.state = ContextState.INITIALIZING;
@@ -167,8 +210,8 @@ export class GeographyContext implements IContext {
     
     try {
       // Создание тестового слоя
-      const testLayer = new TestGeographyLayer();
-      this.layers.push(testLayer);
+      this.testLayer = new TestGeographyLayer();
+      this.layers.push(this.testLayer);
       
       this.state = ContextState.INITIALIZED;
       logger.info('Geography Context initialized');
@@ -188,7 +231,7 @@ export class GeographyContext implements IContext {
     logger.info('Activating Geography Context...');
     
     try {
-      // Активация слоев происходит через LayerManager
+      // Слои активируются через LayerManager
       this.state = ContextState.ACTIVE;
       logger.info('Geography Context activated');
     } catch (error) {
@@ -207,9 +250,14 @@ export class GeographyContext implements IContext {
     logger.info('Deactivating Geography Context...');
     
     try {
+      // Очистка слоев
       for (const layer of this.layers) {
-        layer.clear();
-        layer.remove();
+        try {
+          layer.clear();
+          layer.remove();
+        } catch (error) {
+          logger.warn(`Error clearing layer ${layer.id}:`, error);
+        }
       }
       
       this.state = ContextState.INITIALIZED;
@@ -238,15 +286,23 @@ export class GeographyContext implements IContext {
 
   handleClick(object: THREE.Object3D, position: THREE.Vector3): void {
     const name = object.userData?.name || 'Неизвестный объект';
-    logger.info(`Clicked on: ${name} at position:`, position);
+    const country = object.userData?.country || '';
+    const lat = object.userData?.lat || '—';
+    const lon = object.userData?.lon || '—';
+    
+    logger.info(`Clicked on: ${name} (${country}) at position:`, position);
     
     // Отображение информации
     const panel = document.getElementById('info-panel');
     if (panel) {
       const title = panel.querySelector('.title');
       const subtitle = panel.querySelector('.subtitle');
-      if (title) title.textContent = `📍 ${name}`;
-      if (subtitle) subtitle.textContent = `Широта: ${object.userData?.lat || '—'}, Долгота: ${object.userData?.lon || '—'}`;
+      if (title) {
+        title.textContent = `📍 ${name}${country ? `, ${country}` : ''}`;
+      }
+      if (subtitle) {
+        subtitle.textContent = `Широта: ${lat}, Долгота: ${lon}`;
+      }
       panel.classList.add('visible');
       
       // Авто-скрытие через 3 секунды
@@ -260,15 +316,32 @@ export class GeographyContext implements IContext {
   handleHover(object: THREE.Object3D | null, position: THREE.Vector3): void {
     // Изменение курсора
     document.body.style.cursor = object ? 'pointer' : 'default';
+    
+    // Показ подсказки
+    if (object && object.userData?.name) {
+      const panel = document.getElementById('info-panel');
+      if (panel) {
+        const title = panel.querySelector('.title');
+        const subtitle = panel.querySelector('.subtitle');
+        if (title) title.textContent = `📍 ${object.userData.name}`;
+        if (subtitle) subtitle.textContent = 'Нажмите для подробной информации';
+        panel.classList.add('visible');
+      }
+    }
   }
 
   dispose(): void {
     for (const layer of this.layers) {
-      layer.clear();
-      layer.remove();
+      try {
+        layer.clear();
+        layer.remove();
+      } catch (error) {
+        logger.warn(`Error disposing layer ${layer.id}:`, error);
+      }
     }
     this.layers = [];
     this.dataLoaders.clear();
+    this.testLayer = null;
     this.state = ContextState.UNINITIALIZED;
     logger.info('Geography Context disposed');
   }

@@ -1,28 +1,19 @@
-import { Object3D } from 'three';
+import * as THREE from 'three';
 
 /**
  * Базовый интерфейс для всех визуальных слоев на глобусе
- * Слой - это группа визуальных элементов, объединенных общей логикой отображения
- * 
- * @template TData - Тип данных, используемых слоем
- * @template TOptions - Тип опций слоя
  */
 export interface ILayer<TData = any, TOptions = any> {
   /** Уникальный идентификатор слоя */
   readonly id: string;
-  
   /** Название слоя для отображения */
   readonly name: string;
-  
   /** Тип слоя для категоризации */
   readonly type: LayerType;
-  
   /** Видимость слоя */
   visible: boolean;
-  
   /** Прозрачность слоя (0-1) */
   opacity: number;
-  
   /** Приоритет отрисовки (меньше = выше приоритет) */
   readonly zIndex: number;
   
@@ -54,7 +45,7 @@ export interface ILayer<TData = any, TOptions = any> {
    * Получение всех объектов слоя для взаимодействия
    * @returns Массив объектов
    */
-  getInteractiveObjects(): Object3D[];
+  getInteractiveObjects(): THREE.Object3D[];
   
   /**
    * Фильтрация данных слоя
@@ -78,16 +69,10 @@ export interface ILayer<TData = any, TOptions = any> {
  * Типы слоев для категоризации
  */
 export enum LayerType {
-  /** Базовый слой (текстура, рельеф) */
   BASE = 'base',
-  /** Тематический слой (границы, территории) */
   THEMATIC = 'thematic',
-  /** Маркерный слой (точки, города) */
   MARKER = 'marker',
-  /** Анимационный слой (эффекты, частицы) */
   ANIMATION = 'animation',
-  /** Информационный слой (текст, метки) */
   INFO = 'info',
-  /** Временный слой (для выделения) */
   TEMPORARY = 'temporary'
 }

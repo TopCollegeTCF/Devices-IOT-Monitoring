@@ -3,83 +3,79 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 /**
  * Абстрактный базовый класс для управления земным шаром
- * Предоставляет основные методы для работы с глобусом, камерой и контролами
  */
 export abstract class BaseGlobe {
   /** Сцена Three.js */
-  protected scene: THREE.Scene;
-  
+  protected scene!: THREE.Scene;
   /** Камера для просмотра */
-  protected camera: THREE.PerspectiveCamera;
-  
+  protected camera!: THREE.PerspectiveCamera;
   /** Рендерер Three.js */
-  protected renderer: THREE.WebGLRenderer;
-  
+  protected renderer!: THREE.WebGLRenderer;
   /** Контролы для управления камерой */
-  protected controls: OrbitControls;
-  
+  protected controls!: OrbitControls;
   /** Основная группа глобуса */
-  protected globeGroup: THREE.Group;
-  
+  protected globeGroup!: THREE.Group;
   /** Сфера глобуса */
-  protected globeMesh: THREE.Mesh;
-  
+  protected globeMesh!: THREE.Mesh;
   /** Атмосфера */
-  protected atmosphere: THREE.Mesh;
-  
+  protected atmosphere!: THREE.Mesh;
   /** Текущий уровень зума */
   protected zoomLevel: number = 0;
-  
   /** Минимальный уровень зума (отдаление) */
   protected readonly MIN_ZOOM: number = 0;
-  
   /** Максимальный уровень зума (приближение) */
   protected readonly MAX_ZOOM: number = 100;
-  
+  /** Конфигурация глобуса */
+  protected config!: GlobeConfig;
+  /** Контейнер */
+  protected container!: HTMLElement;
+
   /**
    * Конструктор базового глобуса
    * @param container - DOM элемент для рендеринга
    * @param config - Конфигурация глобуса
    */
   constructor(container: HTMLElement, config: GlobeConfig) {
+    this.container = container;
+    this.config = config;
     this.initScene(container, config);
   }
-  
+
   /**
    * Инициализация сцены
    * @param container - DOM элемент
    * @param config - Конфигурация
    */
   protected abstract initScene(container: HTMLElement, config: GlobeConfig): void;
-  
+
   /**
    * Создание сферы глобуса
    * @param config - Конфигурация
    */
   protected abstract createGlobe(config: GlobeConfig): void;
-  
+
   /**
    * Создание атмосферы
    */
   protected abstract createAtmosphere(): void;
-  
+
   /**
    * Создание звездного фона
    */
   protected abstract createStarField(): void;
-  
+
   /**
    * Обновление состояния глобуса
    * @param deltaTime - Время с последнего обновления
    */
   public abstract update(deltaTime: number): void;
-  
+
   /**
    * Изменение уровня зума
    * @param level - Новый уровень зума
    */
   public abstract setZoomLevel(level: number): void;
-  
+
   /**
    * Получение текущего уровня зума
    * @returns Текущий уровень зума
@@ -87,7 +83,7 @@ export abstract class BaseGlobe {
   public getZoomLevel(): number {
     return this.zoomLevel;
   }
-  
+
   /**
    * Получение координат на поверхности глобуса по позиции мыши
    * @param mouseX - X координата мыши (нормализованная)
@@ -95,7 +91,7 @@ export abstract class BaseGlobe {
    * @returns Координаты на поверхности или null
    */
   public abstract getSurfaceCoordinates(mouseX: number, mouseY: number): THREE.Vector3 | null;
-  
+
   /**
    * Преобразование географических координат в 3D позицию
    * @param lat - Широта
@@ -104,7 +100,7 @@ export abstract class BaseGlobe {
    * @returns 3D позиция
    */
   public abstract latLonToPosition(lat: number, lon: number, radius?: number): THREE.Vector3;
-  
+
   /**
    * Получение текущего состояния камеры
    * @returns Состояние камеры
@@ -120,7 +116,7 @@ export abstract class BaseGlobe {
       zoom: this.zoomLevel
     };
   }
-  
+
   /**
    * Очистка ресурсов глобуса
    */
@@ -129,17 +125,28 @@ export abstract class BaseGlobe {
     this.controls.dispose();
     this.scene.clear();
   }
-  
+
   /**
    * Изменение размера окна
    * @param width - Новая ширина
    * @param height - Новая высота
    */
   public resize(width: number, height: number): void {
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height);
+    if (this.camera && this.renderer) {
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(width, height);
+    }
   }
+
+  /**
+   * Получение сцены
+   */
+  public get scene(): THREE.Scene {
+    return this._scene;
+  }
+
+  private _scene!: THREE.Scene;
 }
 
 /**
@@ -148,25 +155,18 @@ export abstract class BaseGlobe {
 export interface GlobeConfig {
   /** Радиус глобуса */
   radius: number;
-  
   /** Сегменты сферы */
   segments: number;
-  
   /** Текстура земли */
   textureUrl: string;
-  
   /** Текстура облаков */
   cloudTextureUrl?: string;
-  
   /** Высота атмосферы */
   atmosphereHeight: number;
-  
   /** Плотность звезд */
   starDensity: number;
-  
   /** Цвет фона */
   backgroundColor: string;
-  
   /** Настройки камеры */
   camera: {
     position: THREE.Vector3;
@@ -174,7 +174,6 @@ export interface GlobeConfig {
     near: number;
     far: number;
   };
-  
   /** Настройки контролов */
   controls: {
     enableDamping: boolean;

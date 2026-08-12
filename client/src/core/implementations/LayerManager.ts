@@ -61,9 +61,9 @@ export class LayerManager extends BaseLayerManager {
   }
 
   public update(deltaTime: number): void {
+    // Обновление слоев
     for (const layer of this.layers.values()) {
       if (layer.visible) {
-        // Обновление интерактивных объектов
         // Здесь может быть логика обновления слоев
       }
     }
@@ -71,8 +71,12 @@ export class LayerManager extends BaseLayerManager {
 
   public clear(): void {
     for (const layer of this.layers.values()) {
-      layer.clear();
-      layer.remove();
+      try {
+        layer.clear();
+        layer.remove();
+      } catch (error) {
+        console.warn(`Error clearing layer ${layer.id}:`, error);
+      }
     }
     this.layers.clear();
     this.layersByType.clear();
